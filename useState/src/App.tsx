@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useState } from "react";
 import { Folder as FolderIcon, File as FileIcon } from "react-feather";
 
 interface File {
@@ -22,7 +22,7 @@ interface FileSystem extends Omit<Folder, "__type"> {
 const makeFile = () =>
   ({
     name: faker.system.commonFileName(),
-    size: Math.floor(Math.random() * 1_000_000 + 3_000),
+    size: Math.floor(Math.random() * 10_000_000 + 3_000),
     __type: "file",
   } satisfies File);
 
@@ -59,11 +59,19 @@ const generateFS = () => {
   return fs;
 };
 
+const formatSize = (size: number) => {
+  if (size > 1_000_000) {
+    return `${(size / 1_000_000).toFixed(2)} MB`;
+  }
+  return `${(size / 1_000).toFixed(2)} MB`;
+};
+
 function FilePresentation({ file }: { file: File }) {
   return (
     <div className="flex flex-row gap-2 items-center">
       <FileIcon size={16} />
       <span>{file.name}</span>
+      <em>{formatSize(file.size)}</em>
     </div>
   );
 }
@@ -75,7 +83,7 @@ function FolderPresentation({ folder }: { folder: Folder | FileSystem }) {
         <FolderIcon size={16} />
         <strong>{folder.name}</strong>
       </div>
-      <div className="pl-2">
+      <div className="pl-4 border-l">
         {folder.children.map((item, i) => (
           // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
           <Fragment key={i}>
