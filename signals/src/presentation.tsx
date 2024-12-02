@@ -7,22 +7,23 @@ import {
 } from "react-feather";
 import { useSignals } from "@preact/signals-react/runtime";
 
-import type { File, Folder, Root, Node } from "./types";
+import type { File, Folder, Root, FileSystem, Node } from "./types";
 import { formatSize } from "./size";
 
 export function NodePresentation({
-  item,
+  fs,
+  id,
   onAddFile,
   onAddFolder,
   onDelete,
 }: {
-  item: Node;
+  fs: FileSystem;
+  id: string;
   onAddFile: (parentId: string) => void;
   onAddFolder: (parentId: string) => void;
   onDelete: (itemId: string) => void;
 }) {
-  useSignals();
-
+  const item = fs.$nodes.peek()[id];
   if (!item) {
     return null;
   }
@@ -33,12 +34,19 @@ export function NodePresentation({
 
   return (
     <FolderPresentation
+      fs={fs}
       folder={item}
       onAddFile={onAddFile}
       onAddFolder={onAddFolder}
       onDelete={onDelete}
     />
   );
+}
+
+function NodeSize({ item }: { item: Node }) {
+  useSignals();
+
+  return <em>{formatSize(item.$size.value)}</em>;
 }
 
 function FilePresentation({
@@ -48,13 +56,11 @@ function FilePresentation({
   file: File;
   onDelete: (itemId: string) => void;
 }) {
-  useSignals();
-
   return (
     <div className="flex flex-row gap-2 items-center group">
       <FileIcon size={16} />
       <span>{file.name}</span>
-      <em>{formatSize(file.$size.value)}</em>
+      <NodeSize item={file} />
       <span className="hidden group-hover:flex gap-1">
         <button type="button" onClick={() => onDelete(file.id)}>
           <TrashIcon size={16} />
@@ -65,11 +71,13 @@ function FilePresentation({
 }
 
 function FolderPresentation({
+  fs,
   folder,
   onAddFile,
   onAddFolder,
   onDelete,
 }: {
+  fs: FileSystem;
   folder: Folder | Root;
   onAddFile: (parentId: string) => void;
   onAddFolder: (parentId: string) => void;
@@ -82,7 +90,7 @@ function FolderPresentation({
       <div className="flex flex-row gap-2 items-center group">
         <FolderIcon size={16} />
         <strong>{folder.name}</strong>
-        <em>{formatSize(folder.$size.value)}</em>
+        <NodeSize item={folder} />
         <span className="hidden group-hover:flex gap-1">
           <button type="button" onClick={() => onAddFolder(folder.id)}>
             <FolderPlusIcon size={16} />
@@ -100,8 +108,9 @@ function FolderPresentation({
       <div className="pl-4 border-l">
         {folder.$childrenIds.value.map((id) => (
           <NodePresentation
+            fs={fs}
             key={id}
-            item={folder.fs.$nodes.value[id]}
+            id={id}
             onAddFile={onAddFile}
             onAddFolder={onAddFolder}
             onDelete={onDelete}

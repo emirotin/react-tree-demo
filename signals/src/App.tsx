@@ -22,7 +22,8 @@ function App() {
   return (
     <div className="p-4">
       <NodePresentation
-        item={fs.current.$nodes.peek()[ROOT_ID]}
+        fs={fs.current}
+        id={ROOT_ID}
         onAddFile={onAddFile}
         onAddFolder={onAddFolder}
         onDelete={onDelete}
