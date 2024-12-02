@@ -7,6 +7,7 @@ import {
   File as FileIcon,
   FilePlus as FilePlusIcon,
   FolderPlus as FolderPlusIcon,
+  Trash as TrashIcon,
 } from "react-feather";
 
 interface BaseNode {
@@ -106,11 +107,13 @@ function NodePresentation({
   id,
   onAddFile,
   onAddFolder,
+  onDelete,
 }: {
   fs: FileSystem;
   id: string;
   onAddFile: (parentId: string) => void;
   onAddFolder: (parentId: string) => void;
+  onDelete: (itemId: string) => void;
 }) {
   const item = fs.nodes[id];
   const size = useMemo(() => (item ? getSize(fs, id) : 0), [fs, item, id]);
@@ -120,7 +123,7 @@ function NodePresentation({
   }
 
   if (item.__type === "file") {
-    return <FilePresentation file={item} />;
+    return <FilePresentation file={item} onDelete={onDelete} />;
   }
 
   return (
@@ -130,16 +133,28 @@ function NodePresentation({
       size={size}
       onAddFile={onAddFile}
       onAddFolder={onAddFolder}
+      onDelete={onDelete}
     />
   );
 }
 
-function FilePresentation({ file }: { file: File }) {
+function FilePresentation({
+  file,
+  onDelete,
+}: {
+  file: File;
+  onDelete: (itemId: string) => void;
+}) {
   return (
-    <div className="flex flex-row gap-2 items-center">
+    <div className="flex flex-row gap-2 items-center group">
       <FileIcon size={16} />
       <span>{file.name}</span>
       <em>{formatSize(file.size)}</em>
+      <span className="hidden group-hover:flex gap-1">
+        <button type="button" onClick={() => onDelete(file.id)}>
+          <TrashIcon size={16} />
+        </button>
+      </span>
     </div>
   );
 }
@@ -150,12 +165,14 @@ function FolderPresentation({
   size,
   onAddFile,
   onAddFolder,
+  onDelete,
 }: {
   fs: FileSystem;
   folder: Folder | Root;
   size: number;
   onAddFile: (parentId: string) => void;
   onAddFolder: (parentId: string) => void;
+  onDelete: (itemId: string) => void;
 }) {
   return (
     <div>
@@ -170,6 +187,11 @@ function FolderPresentation({
           <button type="button" onClick={() => onAddFile(folder.id)}>
             <FilePlusIcon size={16} />
           </button>
+          {folder.__type !== "root" && (
+            <button type="button" onClick={() => onDelete(folder.id)}>
+              <TrashIcon size={16} />
+            </button>
+          )}
         </span>
       </div>
       <div className="pl-4 border-l">
@@ -177,9 +199,10 @@ function FolderPresentation({
           <NodePresentation
             key={id}
             id={id}
+            fs={fs}
             onAddFile={onAddFile}
             onAddFolder={onAddFolder}
-            fs={fs}
+            onDelete={onDelete}
           />
         ))}
       </div>
@@ -203,6 +226,33 @@ const addItem = (
   });
 };
 
+const deleteItem = (fs: FileSystem, itemId: string): FileSystem => {
+  const item = fs.nodes[itemId];
+  if (!item) {
+    throw new Error("Item not found");
+  }
+  if (item.__type === "root") {
+    throw new Error("Cannot delete root");
+  }
+  const parentId = item.parentId;
+  const parent = fs.nodes[parentId];
+  if (!parent) {
+    throw new Error("Item doesn't have parent");
+  }
+  if (parent.__type === "file") {
+    throw new Error("Item's parent is invalid");
+  }
+  const i = parent.childrenIds.indexOf(itemId);
+  if (i < 0) {
+    throw new Error("Item is not marked as child of its parent");
+  }
+
+  return produce(fs, (draft) => {
+    (draft.nodes[parentId] as Folder | Root).childrenIds.splice(i, 1);
+    delete draft.nodes[itemId];
+  });
+};
+
 function App() {
   const [fs, setFS] = useState(makeFS);
 
@@ -214,6 +264,10 @@ function App() {
     setFS(addItem(fs, parentId, "folder"));
   };
 
+  const onDelete = (itemId: string) => {
+    setFS(deleteItem(fs, itemId));
+  };
+
   return (
     <div className="p-4">
       <NodePresentation
@@ -221,6 +275,7 @@ function App() {
         id={ROOT_ID}
         onAddFile={onAddFile}
         onAddFolder={onAddFolder}
+        onDelete={onDelete}
       />
     </div>
   );
