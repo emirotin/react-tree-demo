@@ -1,35 +1,36 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState } from "react";
+
+import { ROOT_ID } from "./types";
+import { NodePresentation } from "./presentation";
+import { addItem, deleteItem } from "./state";
+import { makeFS } from "./factories";
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [fs, setFS] = useState(makeFS);
+
+  const onAddFile = (parentId: string) => {
+    setFS(addItem(fs, parentId, "file"));
+  };
+
+  const onAddFolder = (parentId: string) => {
+    setFS(addItem(fs, parentId, "folder"));
+  };
+
+  const onDelete = (itemId: string) => {
+    setFS(deleteItem(fs, itemId));
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div className="p-4">
+      <NodePresentation
+        fs={fs}
+        id={ROOT_ID}
+        onAddFile={onAddFile}
+        onAddFolder={onAddFolder}
+        onDelete={onDelete}
+      />
+    </div>
+  );
 }
 
-export default App
+export default App;
