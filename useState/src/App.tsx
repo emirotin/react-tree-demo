@@ -1,5 +1,5 @@
 import { faker } from "@faker-js/faker";
-import { Fragment, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { Folder as FolderIcon, File as FileIcon } from "react-feather";
 
 interface File {
@@ -63,7 +63,14 @@ const formatSize = (size: number) => {
   if (size > 1_000_000) {
     return `${(size / 1_000_000).toFixed(2)} MB`;
   }
-  return `${(size / 1_000).toFixed(2)} MB`;
+  return `${(size / 1_000).toFixed(2)} KB`;
+};
+
+const getSize = (item: File | Folder | FileSystem): number => {
+  if (item.__type === "file") {
+    return item.size;
+  }
+  return 4_000 + item.children.map(getSize).reduce((acc, x) => acc + x, 0);
 };
 
 function FilePresentation({ file }: { file: File }) {
@@ -77,11 +84,14 @@ function FilePresentation({ file }: { file: File }) {
 }
 
 function FolderPresentation({ folder }: { folder: Folder | FileSystem }) {
+  const size = useMemo(() => getSize(folder), [folder]);
+
   return (
     <div>
       <div className="flex flex-row gap-2 items-center">
         <FolderIcon size={16} />
         <strong>{folder.name}</strong>
+        <em>{formatSize(size)}</em>
       </div>
       <div className="pl-4 border-l">
         {folder.children.map((item, i) => (
@@ -100,7 +110,7 @@ function FolderPresentation({ folder }: { folder: Folder | FileSystem }) {
 }
 
 function App() {
-  const [fs, setFS] = useState(generateFS);
+  const [fs, _setFS] = useState(generateFS);
 
   return (
     <div className="p-4">
