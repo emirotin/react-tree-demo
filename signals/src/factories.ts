@@ -28,13 +28,13 @@ export const makeFolder = (fs: FileSystem, parentId: string): Folder => {
     $childrenIds: signal<string[]>([]),
     __type: "folder",
     $size: computed(() => {
-      const self = fs.$nodes.value[selfId] as Folder;
+      const self = fs.nodes[selfId] as Folder;
 
       return (
         4_000 +
         self.$childrenIds.value
           .map((id) => {
-            const item = fs.$nodes.value[id];
+            const item = fs.nodes[id];
             return item.$size.value;
           })
           .reduce((acc, x) => acc + x, 0)
@@ -51,13 +51,13 @@ export const makeRoot = (fs: FileSystem): Root =>
     $childrenIds: signal<string[]>([]),
     __type: "root",
     $size: computed(() => {
-      const self = fs.$nodes.value[ROOT_ID] as Root;
+      const self = fs.nodes[ROOT_ID] as Root;
 
       return (
         4_000 +
         self.$childrenIds.value
           .map((id) => {
-            const item = fs.$nodes.value[id];
+            const item = fs.nodes[id];
             return item.$size.value;
           })
           .reduce((acc, x) => acc + x, 0)
@@ -67,14 +67,12 @@ export const makeRoot = (fs: FileSystem): Root =>
 
 export const makeFS = (): FileSystem => {
   const fs: FileSystem = {
-    $nodes: signal({}),
+    nodes: {},
   };
 
   const root = makeRoot(fs);
 
-  fs.$nodes.value = {
-    [ROOT_ID]: root,
-  };
+  fs.nodes[ROOT_ID] = root;
 
   return fs;
 };

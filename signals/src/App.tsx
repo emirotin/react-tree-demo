@@ -33,7 +33,7 @@ function App() {
     <div className="p-4">
       <NodePresentation
         fs={fs}
-        item={fs.$nodes.peek()[ROOT_ID]}
+        item={fs.nodes[ROOT_ID]}
         onAddFile={onAddFile}
         onAddFolder={onAddFolder}
         onDelete={onDelete}

@@ -53,7 +53,7 @@ function FilePresentation({
     <div className="flex flex-row gap-2 items-center group">
       <FileIcon size={16} />
       <span>{file.name}</span>
-      <NodeSize item={file} />
+      <em>{formatSize(file.$size.value)}</em>
       <span className="hidden group-hover:flex gap-1">
         <button type="button" onClick={() => onDelete(file.id)}>
           <TrashIcon size={16} />
@@ -61,12 +61,6 @@ function FilePresentation({
       </span>
     </div>
   );
-}
-
-function NodeSize({ item }: { item: Node }) {
-  useSignals();
-
-  return <em>{formatSize(item.$size.value)}</em>;
 }
 
 function FolderPresentation({
@@ -89,7 +83,7 @@ function FolderPresentation({
       <div className="flex flex-row gap-2 items-center group">
         <FolderIcon size={16} />
         <strong>{folder.name}</strong>
-        <NodeSize item={folder} />
+        <em>{formatSize(folder.$size.value)}</em>
         <span className="hidden group-hover:flex gap-1">
           <button type="button" onClick={() => onAddFolder(folder.id)}>
             <FolderPlusIcon size={16} />
@@ -108,7 +102,7 @@ function FolderPresentation({
         {folder.$childrenIds.value.map((id) => (
           <NodePresentation
             key={id}
-            item={fs.$nodes.peek()[id]}
+            item={fs.nodes[id]}
             fs={fs}
             onAddFile={onAddFile}
             onAddFolder={onAddFolder}

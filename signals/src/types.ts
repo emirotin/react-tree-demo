@@ -31,5 +31,5 @@ export interface Root extends BaseNode {
 export type Node = File | Folder | Root;
 
 export interface FileSystem {
-  $nodes: Signal<Record<string, Node>>;
+  nodes: Record<string, Node>;
 }
