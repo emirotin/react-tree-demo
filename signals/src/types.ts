@@ -1,7 +1,6 @@
-import type { ReadonlySignal, Signal } from "@preact/signals";
+import type { ReadonlySignal, Signal } from "@preact/signals-core";
 
 export interface BaseNode {
-  fs: FileSystem;
   name: string;
   id: string;
   parentId: string | null;

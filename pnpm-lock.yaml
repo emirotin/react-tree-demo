@@ -13,12 +13,15 @@ importers:
       '@faker-js/faker':
         specifier: ^9.2.0
         version: 9.2.0
-      '@preact/signals':
-        specifier: ^1.3.1
-        version: 1.3.1(preact@10.25.1)
+      '@preact/signals-core':
+        specifier: ^1.8.0
+        version: 1.8.0
       '@preact/signals-react':
-        specifier: ^2.2.0
-        version: 2.2.0(react@18.3.1)
+        specifier: ^3.0.1
+        version: 3.0.1(react@18.3.1)
+      immer:
+        specifier: ^10.1.1
+        version: 10.1.1
       nanoid:
         specifier: ^5.0.9
         version: 5.0.9
@@ -713,23 +716,14 @@ packages:
     resolution: {integrity: sha512-OBvUsRZqNmjzCZXWLxkZfhcgT+Fk8DDcT/8vD6a1xhDemodyy87UJRJfASMuSD8FaAIeGgGm85ydXhm7lr4fyA==}
     dev: false
 
-  /@preact/signals-react@2.2.0(react@18.3.1):
-    resolution: {integrity: sha512-EPYlhXqqcOUxz2gTQGt4rtK6X7Jr04517DcJVZ4I5a7Gxy39haK24uFeVWtiU/tnEReRFcxpQN6poYra1jf68A==}
+  /@preact/signals-react@3.0.1(react@18.3.1):
+    resolution: {integrity: sha512-HkM5Q2IsETO1M0bUzy4JB0EPQCf99SMbWP9K6GYlYVHfOX1HLKJ6Dl9L1/1rQnmrQpUsTw0R+IJQDh6tYWar2g==}
     peerDependencies:
-      react: ^16.14.0 || 17.x || 18.x
+      react: ^16.14.0 || 17.x || 18.x || 19.x
     dependencies:
       '@preact/signals-core': 1.8.0
       react: 18.3.1
       use-sync-external-store: 1.2.2(react@18.3.1)
-    dev: false
-
-  /@preact/signals@1.3.1(preact@10.25.1):
-    resolution: {integrity: sha512-nNvSF2O7RDzxp1Rm7SkA5QhN1a2kN8pGE8J5o6UjgDof0F0Vlg6d6HUUVxxqZ1uJrN9xnH2DpL6rpII3Es0SsQ==}
-    peerDependencies:
-      preact: 10.x
-    dependencies:
-      '@preact/signals-core': 1.8.0
-      preact: 10.25.1
     dev: false
 
   /@rollup/rollup-android-arm-eabi@4.28.0:
@@ -2019,10 +2013,6 @@ packages:
       picocolors: 1.1.1
       source-map-js: 1.2.1
     dev: true
-
-  /preact@10.25.1:
-    resolution: {integrity: sha512-frxeZV2vhQSohQwJ7FvlqC40ze89+8friponWUFeVEkaCfhC6Eu4V0iND5C9CXz8JLndV07QRDeXzH1+Anz5Og==}
-    dev: false
 
   /prelude-ls@1.2.1:
     resolution: {integrity: sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==}

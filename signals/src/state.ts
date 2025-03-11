@@ -1,6 +1,6 @@
-import type { FileSystem, Folder, Root } from "./types";
+import type { FileSystem } from "./types";
 import { makeFile, makeFolder } from "./factories";
-import { batch } from "@preact/signals";
+import { batch } from "@preact/signals-core";
 
 export const addItem = (
   fs: FileSystem,
@@ -13,14 +13,14 @@ export const addItem = (
   }
 
   const newItem =
-    type === "file" ? makeFile(fs, parentId) : makeFolder(fs, parentId);
+    type === "file" ? makeFile(parentId) : makeFolder(fs, parentId);
 
   batch(() => {
     fs.$nodes.value = {
       ...fs.$nodes.value,
       [newItem.id]: newItem,
     };
-    const parent = fs.$nodes.peek()[parentId] as Folder | Root;
+
     parent.$childrenIds.value = [...parent.$childrenIds.value, newItem.id];
   });
 };
@@ -47,13 +47,11 @@ export const deleteItem = (fs: FileSystem, itemId: string) => {
   }
 
   batch(() => {
-    const parent = fs.$nodes.peek()[parentId] as Folder | Root;
     parent.$childrenIds.value = parent.$childrenIds.value.filter(
       (id) => id !== itemId
     );
-    const newNodes = {
-      ...fs.$nodes.value,
-    };
+
+    const newNodes = { ...fs.$nodes.value };
     delete newNodes[itemId];
     fs.$nodes.value = newNodes;
   });

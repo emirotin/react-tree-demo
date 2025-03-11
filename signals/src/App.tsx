@@ -1,28 +1,38 @@
+import { useCallback, useMemo } from "react";
+
 import { ROOT_ID } from "./types";
 import { NodePresentation } from "./presentation";
 import { addItem, deleteItem } from "./state";
 import { makeFS } from "./factories";
-import { useCallback, useRef } from "react";
 
 function App() {
-  const fs = useRef(makeFS());
+  const fs = useMemo(makeFS, []);
 
-  const onAddFile = useCallback((parentId: string) => {
-    addItem(fs.current, parentId, "file");
-  }, []);
+  const onAddFile = useCallback(
+    (parentId: string) => {
+      addItem(fs, parentId, "file");
+    },
+    [fs]
+  );
 
-  const onAddFolder = useCallback((parentId: string) => {
-    addItem(fs.current, parentId, "folder");
-  }, []);
+  const onAddFolder = useCallback(
+    (parentId: string) => {
+      addItem(fs, parentId, "folder");
+    },
+    [fs]
+  );
 
-  const onDelete = useCallback((itemId: string) => {
-    deleteItem(fs.current, itemId);
-  }, []);
+  const onDelete = useCallback(
+    (itemId: string) => {
+      deleteItem(fs, itemId);
+    },
+    [fs]
+  );
 
   return (
     <div className="p-4">
       <NodePresentation
-        fs={fs.current}
+        fs={fs}
         id={ROOT_ID}
         onAddFile={onAddFile}
         onAddFolder={onAddFolder}

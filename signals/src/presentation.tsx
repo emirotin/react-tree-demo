@@ -1,3 +1,4 @@
+import { useSignals } from "@preact/signals-react/runtime";
 import {
   Folder as FolderIcon,
   File as FileIcon,
@@ -5,7 +6,6 @@ import {
   FolderPlus as FolderPlusIcon,
   Trash as TrashIcon,
 } from "react-feather";
-import { useSignals } from "@preact/signals-react/runtime";
 
 import type { File, Folder, Root, FileSystem, Node } from "./types";
 import { formatSize } from "./size";
@@ -24,6 +24,7 @@ export function NodePresentation({
   onDelete: (itemId: string) => void;
 }) {
   const item = fs.$nodes.peek()[id];
+
   if (!item) {
     return null;
   }
@@ -108,9 +109,9 @@ function FolderPresentation({
       <div className="pl-4 border-l">
         {folder.$childrenIds.value.map((id) => (
           <NodePresentation
-            fs={fs}
             key={id}
             id={id}
+            fs={fs}
             onAddFile={onAddFile}
             onAddFolder={onAddFolder}
             onDelete={onDelete}
