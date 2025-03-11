@@ -14,10 +14,7 @@ export const addItem = (
   const newItem =
     type === "file" ? makeFile(parentId) : makeFolder(fs, parentId);
 
-  fs.nodes = {
-    ...fs.nodes,
-    [newItem.id]: newItem,
-  };
+  fs.nodes[newItem.id] = newItem;
 
   parent.$childrenIds.value = [...parent.$childrenIds.value, newItem.id];
 };

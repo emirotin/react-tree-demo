@@ -12,10 +12,10 @@ export const addItem = (
   if (!parent || parent.__type === "file") {
     throw new Error("Cannot add file as a child of another file");
   }
-  return produce(fs, (draft) => {
+  return produce(fs, (fsDraft) => {
     const newItem = type === "file" ? makeFile(parentId) : makeFolder(parentId);
-    draft.nodes[newItem.id] = newItem;
-    (draft.nodes[parentId] as Folder | Root).childrenIds.push(newItem.id);
+    fsDraft.nodes[newItem.id] = newItem;
+    (fsDraft.nodes[parentId] as Folder | Root).childrenIds.push(newItem.id);
   });
 };
 
@@ -40,8 +40,8 @@ export const deleteItem = (fs: FileSystem, itemId: string): FileSystem => {
     throw new Error("Item is not marked as child of its parent");
   }
 
-  return produce(fs, (draft) => {
-    (draft.nodes[parentId] as Folder | Root).childrenIds.splice(i, 1);
-    delete draft.nodes[itemId];
+  return produce(fs, (fsDraft) => {
+    (fsDraft.nodes[parentId] as Folder | Root).childrenIds.splice(i, 1);
+    delete fsDraft.nodes[itemId];
   });
 };
