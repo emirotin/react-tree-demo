@@ -7,13 +7,13 @@ export interface BaseNode {
 export interface File extends BaseNode {
   size: number;
   parentId: string;
-  __type: "file";
+  __type: "file"; // Branded types
 }
 
 export interface Folder extends BaseNode {
   childrenIds: string[];
   parentId: string;
-  __type: "folder";
+  __type: "folder"; // Branded types
 }
 
 export const ROOT_ID = "<root>";
@@ -23,7 +23,7 @@ export interface Root extends BaseNode {
   name: typeof ROOT_ID;
   childrenIds: string[];
   parentId: null;
-  __type: "root";
+  __type: "root"; // Branded types
 }
 
 export type Node = File | Folder | Root;
