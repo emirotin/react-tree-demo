@@ -1,0 +1,381 @@
+diff --color --un useState/src/App.tsx signals/src/App.tsx
+--- useState/src/App.tsx	2025-03-11 16:45:19
++++ signals/src/App.tsx	2025-03-11 17:12:56
+@@ -1,4 +1,4 @@
+-import { useCallback, useState } from "react";
++import { useCallback, useMemo } from "react";
+ 
+ import { ROOT_ID } from "./types";
+ import { NodePresentation } from "./presentation";
+@@ -6,25 +6,25 @@
+ import { makeFS } from "./factories";
+ 
+ function App() {
+-  const [fs, setFS] = useState(makeFS);
++  const fs = useMemo(makeFS, []);
+ 
+   const onAddFile = useCallback(
+     (parentId: string) => {
+-      setFS(addItem(fs, parentId, "file"));
++      addItem(fs, parentId, "file");
+     },
+     [fs]
+   );
+ 
+   const onAddFolder = useCallback(
+     (parentId: string) => {
+-      setFS(addItem(fs, parentId, "folder"));
++      addItem(fs, parentId, "folder");
+     },
+     [fs]
+   );
+ 
+   const onDelete = useCallback(
+     (itemId: string) => {
+-      setFS(deleteItem(fs, itemId));
++      deleteItem(fs, itemId);
+     },
+     [fs]
+   );
+@@ -33,7 +33,7 @@
+     <div className="p-4">
+       <NodePresentation
+         fs={fs}
+-        id={ROOT_ID}
++        item={fs.$nodes.peek()[ROOT_ID]}
+         onAddFile={onAddFile}
+         onAddFolder={onAddFolder}
+         onDelete={onDelete}
+diff --color --un useState/src/factories.ts signals/src/factories.ts
+--- useState/src/factories.ts	2024-12-02 15:28:51
++++ signals/src/factories.ts	2025-03-11 16:56:38
+@@ -1,3 +1,4 @@
++import { computed, signal } from "@preact/signals-core";
+ import { faker } from "@faker-js/faker";
+ import { nanoid } from "nanoid";
+ 
+@@ -14,34 +15,66 @@
+     id: nanoid(),
+     parentId,
+     name: faker.system.commonFileName(),
+-    size: Math.floor(Math.random() * 10_000_000 + 3_000),
++    $size: signal(Math.floor(Math.random() * 10_000_000 + 3_000)),
+     __type: "file",
+   } satisfies File);
+ 
+-export const makeFolder = (parentId: string): Folder =>
+-  ({
+-    id: nanoid(),
++export const makeFolder = (fs: FileSystem, parentId: string): Folder => {
++  const selfId = nanoid();
++  return {
++    id: selfId,
+     parentId,
+     name: faker.system.commonFileName().split(".")[0],
+-    childrenIds: [] as string[],
++    $childrenIds: signal<string[]>([]),
+     __type: "folder",
+-  } satisfies Folder);
++    $size: computed(() => {
++      const self = fs.$nodes.value[selfId] as Folder;
+ 
+-export const makeRoot = (): Root =>
++      return (
++        4_000 +
++        self.$childrenIds.value
++          .map((id) => {
++            const item = fs.$nodes.value[id];
++            return item.$size.value;
++          })
++          .reduce((acc, x) => acc + x, 0)
++      );
++    }),
++  } satisfies Folder;
++};
++
++export const makeRoot = (fs: FileSystem): Root =>
+   ({
+     id: ROOT_ID,
+     parentId: null,
+     name: ROOT_ID,
+-    childrenIds: [] as string[],
++    $childrenIds: signal<string[]>([]),
+     __type: "root",
++    $size: computed(() => {
++      const self = fs.$nodes.value[ROOT_ID] as Root;
++
++      return (
++        4_000 +
++        self.$childrenIds.value
++          .map((id) => {
++            const item = fs.$nodes.value[id];
++            return item.$size.value;
++          })
++          .reduce((acc, x) => acc + x, 0)
++      );
++    }),
+   } satisfies Root);
+ 
+ export const makeFS = (): FileSystem => {
+-  const root = makeRoot();
++  const fs: FileSystem = {
++    $nodes: signal({}),
++  };
+ 
+-  return {
+-    nodes: {
+-      [root.id]: root,
+-    },
+-  } satisfies FileSystem;
++  const root = makeRoot(fs);
++
++  fs.$nodes.value = {
++    [ROOT_ID]: root,
++  };
++
++  return fs;
+ };
+diff --color --un useState/src/presentation.tsx signals/src/presentation.tsx
+--- useState/src/presentation.tsx	2024-12-02 15:31:54
++++ signals/src/presentation.tsx	2025-03-11 17:14:24
+@@ -1,7 +1,4 @@
+-import { useMemo } from "react";
+-import { getSize } from "./size";
+-import type { File, Folder, Root, FileSystem } from "./types";
+-import { formatSize } from "./size";
++import { useSignals } from "@preact/signals-react/runtime";
+ import {
+   Folder as FolderIcon,
+   File as FileIcon,
+@@ -10,22 +7,22 @@
+   Trash as TrashIcon,
+ } from "react-feather";
+ 
++import type { File, Folder, Root, FileSystem, Node } from "./types";
++import { formatSize } from "./size";
++
+ export function NodePresentation({
+   fs,
+-  id,
++  item,
+   onAddFile,
+   onAddFolder,
+   onDelete,
+ }: {
+   fs: FileSystem;
+-  id: string;
++  item: Node;
+   onAddFile: (parentId: string) => void;
+   onAddFolder: (parentId: string) => void;
+   onDelete: (itemId: string) => void;
+ }) {
+-  const item = fs.nodes[id];
+-  const size = useMemo(() => (item ? getSize(fs, id) : 0), [fs, item, id]);
+-
+   if (!item) {
+     return null;
+   }
+@@ -38,7 +35,6 @@
+     <FolderPresentation
+       fs={fs}
+       folder={item}
+-      size={size}
+       onAddFile={onAddFile}
+       onAddFolder={onAddFolder}
+       onDelete={onDelete}
+@@ -57,7 +53,7 @@
+     <div className="flex flex-row gap-2 items-center group">
+       <FileIcon size={16} />
+       <span>{file.name}</span>
+-      <em>{formatSize(file.size)}</em>
++      <em>{formatSize(file.$size.value)}</em>
+       <span className="hidden group-hover:flex gap-1">
+         <button type="button" onClick={() => onDelete(file.id)}>
+           <TrashIcon size={16} />
+@@ -70,24 +66,24 @@
+ function FolderPresentation({
+   fs,
+   folder,
+-  size,
+   onAddFile,
+   onAddFolder,
+   onDelete,
+ }: {
+   fs: FileSystem;
+   folder: Folder | Root;
+-  size: number;
+   onAddFile: (parentId: string) => void;
+   onAddFolder: (parentId: string) => void;
+   onDelete: (itemId: string) => void;
+ }) {
++  useSignals();
++
+   return (
+     <div>
+       <div className="flex flex-row gap-2 items-center group">
+         <FolderIcon size={16} />
+         <strong>{folder.name}</strong>
+-        <em>{formatSize(size)}</em>
++        <em>{formatSize(folder.$size.value)}</em>
+         <span className="hidden group-hover:flex gap-1">
+           <button type="button" onClick={() => onAddFolder(folder.id)}>
+             <FolderPlusIcon size={16} />
+@@ -103,10 +99,10 @@
+         </span>
+       </div>
+       <div className="pl-4 border-l">
+-        {folder.childrenIds.map((id) => (
++        {folder.$childrenIds.value.map((id) => (
+           <NodePresentation
+             key={id}
+-            id={id}
++            item={fs.$nodes.peek()[id]}
+             fs={fs}
+             onAddFile={onAddFile}
+             onAddFolder={onAddFolder}
+diff --color --un useState/src/size.ts signals/src/size.ts
+--- useState/src/size.ts	2024-12-02 15:29:42
++++ signals/src/size.ts	2025-03-11 16:57:15
+@@ -1,23 +1,6 @@
+-import type { FileSystem } from "./types";
+-
+ export const formatSize = (size: number) => {
+   if (size > 1_000_000) {
+     return `${(size / 1_000_000).toFixed(2)} MB`;
+   }
+   return `${(size / 1_000).toFixed(2)} KB`;
+-};
+-
+-export const getSize = (fs: FileSystem, itemId: string): number => {
+-  const item = fs.nodes[itemId];
+-  if (!item) {
+-    return 0;
+-  }
+-
+-  if (item.__type === "file") {
+-    return item.size;
+-  }
+-  return (
+-    4_000 +
+-    item.childrenIds.map((id) => getSize(fs, id)).reduce((acc, x) => acc + x, 0)
+-  );
+ };
+diff --color --un useState/src/state.ts signals/src/state.ts
+--- useState/src/state.ts	2024-12-02 15:33:09
++++ signals/src/state.ts	2025-03-11 17:00:36
+@@ -1,26 +1,32 @@
+-import { produce } from "immer";
+-
+-import type { FileSystem, Folder, Root } from "./types";
++import type { FileSystem } from "./types";
+ import { makeFile, makeFolder } from "./factories";
++import { batch } from "@preact/signals-core";
+ 
+ export const addItem = (
+   fs: FileSystem,
+   parentId: string,
+   type: "file" | "folder"
+-): FileSystem => {
+-  const parent = fs.nodes[parentId];
++) => {
++  const parent = fs.$nodes.peek()[parentId];
+   if (!parent || parent.__type === "file") {
+     throw new Error("Cannot add file as a child of another file");
+   }
+-  return produce(fs, (draft) => {
+-    const newItem = type === "file" ? makeFile(parentId) : makeFolder(parentId);
+-    draft.nodes[newItem.id] = newItem;
+-    (draft.nodes[parentId] as Folder | Root).childrenIds.push(newItem.id);
++
++  const newItem =
++    type === "file" ? makeFile(parentId) : makeFolder(fs, parentId);
++
++  batch(() => {
++    fs.$nodes.value = {
++      ...fs.$nodes.value,
++      [newItem.id]: newItem,
++    };
++
++    parent.$childrenIds.value = [...parent.$childrenIds.value, newItem.id];
+   });
+ };
+ 
+-export const deleteItem = (fs: FileSystem, itemId: string): FileSystem => {
+-  const item = fs.nodes[itemId];
++export const deleteItem = (fs: FileSystem, itemId: string) => {
++  const item = fs.$nodes.peek()[itemId];
+   if (!item) {
+     throw new Error("Item not found");
+   }
+@@ -28,20 +34,25 @@
+     throw new Error("Cannot delete root");
+   }
+   const parentId = item.parentId;
+-  const parent = fs.nodes[parentId];
++  const parent = fs.$nodes.peek()[parentId];
+   if (!parent) {
+     throw new Error("Item doesn't have parent");
+   }
+   if (parent.__type === "file") {
+     throw new Error("Item's parent is invalid");
+   }
+-  const i = parent.childrenIds.indexOf(itemId);
++  const i = parent.$childrenIds.peek().indexOf(itemId);
+   if (i < 0) {
+     throw new Error("Item is not marked as child of its parent");
+   }
+ 
+-  return produce(fs, (draft) => {
+-    (draft.nodes[parentId] as Folder | Root).childrenIds.splice(i, 1);
+-    delete draft.nodes[itemId];
++  batch(() => {
++    parent.$childrenIds.value = parent.$childrenIds.value.filter(
++      (id) => id !== itemId
++    );
++
++    const newNodes = { ...fs.$nodes.value };
++    delete newNodes[itemId];
++    fs.$nodes.value = newNodes;
+   });
+ };
+diff --color --un useState/src/types.ts signals/src/types.ts
+--- useState/src/types.ts	2025-03-11 16:46:09
++++ signals/src/types.ts	2025-03-11 16:53:10
+@@ -1,17 +1,19 @@
++import type { ReadonlySignal, Signal } from "@preact/signals-core";
++
+ export interface BaseNode {
+   name: string;
+   id: string;
+   parentId: string | null;
++  $size: ReadonlySignal<number>;
+ }
+ 
+ export interface File extends BaseNode {
+-  size: number;
+   parentId: string;
+   __type: "file";
+ }
+ 
+ export interface Folder extends BaseNode {
+-  childrenIds: string[];
++  $childrenIds: Signal<string[]>;
+   parentId: string;
+   __type: "folder";
+ }
+@@ -21,7 +23,7 @@
+ export interface Root extends BaseNode {
+   id: typeof ROOT_ID;
+   name: typeof ROOT_ID;
+-  childrenIds: string[];
++  $childrenIds: Signal<string[]>;
+   parentId: null;
+   __type: "root";
+ }
+@@ -29,5 +31,5 @@
+ export type Node = File | Folder | Root;
+ 
+ export interface FileSystem {
+-  nodes: Record<string, Node>;
++  $nodes: Signal<Record<string, Node>>;
+ }
