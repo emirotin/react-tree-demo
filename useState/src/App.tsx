@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 import { ROOT_ID } from "./types";
 import { NodePresentation } from "./presentation";
@@ -8,17 +8,26 @@ import { makeFS } from "./factories";
 function App() {
   const [fs, setFS] = useState(makeFS);
 
-  const onAddFile = (parentId: string) => {
-    setFS(addItem(fs, parentId, "file"));
-  };
+  const onAddFile = useCallback(
+    (parentId: string) => {
+      setFS(addItem(fs, parentId, "file"));
+    },
+    [fs]
+  );
 
-  const onAddFolder = (parentId: string) => {
-    setFS(addItem(fs, parentId, "folder"));
-  };
+  const onAddFolder = useCallback(
+    (parentId: string) => {
+      setFS(addItem(fs, parentId, "folder"));
+    },
+    [fs]
+  );
 
-  const onDelete = (itemId: string) => {
-    setFS(deleteItem(fs, itemId));
-  };
+  const onDelete = useCallback(
+    (itemId: string) => {
+      setFS(deleteItem(fs, itemId));
+    },
+    [fs]
+  );
 
   return (
     <div className="p-4">

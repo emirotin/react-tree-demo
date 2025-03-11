@@ -19,6 +19,7 @@ export interface Folder extends BaseNode {
 export const ROOT_ID = "<root>";
 
 export interface Root extends BaseNode {
+  id: typeof ROOT_ID;
   name: typeof ROOT_ID;
   childrenIds: string[];
   parentId: null;
