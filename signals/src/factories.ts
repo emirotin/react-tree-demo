@@ -15,7 +15,7 @@ export const makeFile = (parentId: string): File =>
     id: nanoid(),
     parentId,
     name: faker.system.commonFileName(),
-    $size: signal(Math.random() * 10_000_000 + 3_000),
+    $size: signal(Math.floor(Math.random() * 10_000_000 + 3_000)),
     __type: "file",
   } satisfies File);
 
@@ -34,7 +34,7 @@ export const makeFolder = (fs: FileSystem, parentId: string): Folder => {
         4_000 +
         self.$childrenIds.value
           .map((id) => {
-            const item = fs.$nodes.peek()[id];
+            const item = fs.$nodes.value[id];
             return item.$size.value;
           })
           .reduce((acc, x) => acc + x, 0)
@@ -42,6 +42,7 @@ export const makeFolder = (fs: FileSystem, parentId: string): Folder => {
     }),
   } satisfies Folder;
 };
+
 export const makeRoot = (fs: FileSystem): Root =>
   ({
     id: ROOT_ID,
@@ -56,7 +57,7 @@ export const makeRoot = (fs: FileSystem): Root =>
         4_000 +
         self.$childrenIds.value
           .map((id) => {
-            const item = fs.$nodes.peek()[id];
+            const item = fs.$nodes.value[id];
             return item.$size.value;
           })
           .reduce((acc, x) => acc + x, 0)
@@ -70,7 +71,10 @@ export const makeFS = (): FileSystem => {
   };
 
   const root = makeRoot(fs);
-  fs.$nodes.value = { [ROOT_ID]: root };
+
+  fs.$nodes.value = {
+    [ROOT_ID]: root,
+  };
 
   return fs;
 };
