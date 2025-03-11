@@ -7,26 +7,22 @@ import {
   Trash as TrashIcon,
 } from "react-feather";
 
-import type { File, Folder, Root, FileSystem } from "./types";
+import type { File, Folder, Root, FileSystem, Node } from "./types";
 import { formatSize } from "./size";
 
 export function NodePresentation({
   fs,
-  id,
+  item,
   onAddFile,
   onAddFolder,
   onDelete,
 }: {
   fs: FileSystem;
-  id: string;
+  item: Node;
   onAddFile: (parentId: string) => void;
   onAddFolder: (parentId: string) => void;
   onDelete: (itemId: string) => void;
 }) {
-  useSignals();
-
-  const item = fs.$nodes.value[id];
-
   if (!item) {
     return null;
   }
@@ -46,6 +42,12 @@ export function NodePresentation({
   );
 }
 
+function NodeSize({ item }: { item: Node }) {
+  useSignals();
+
+  return <em>{formatSize(item.$size.value)}</em>;
+}
+
 function FilePresentation({
   file,
   onDelete,
@@ -53,13 +55,11 @@ function FilePresentation({
   file: File;
   onDelete: (itemId: string) => void;
 }) {
-  useSignals();
-
   return (
     <div className="flex flex-row gap-2 items-center group">
       <FileIcon size={16} />
       <span>{file.name}</span>
-      <em>{formatSize(file.$size.value)}</em>
+      <NodeSize item={file} />
       <span className="hidden group-hover:flex gap-1">
         <button type="button" onClick={() => onDelete(file.id)}>
           <TrashIcon size={16} />
@@ -89,7 +89,7 @@ function FolderPresentation({
       <div className="flex flex-row gap-2 items-center group">
         <FolderIcon size={16} />
         <strong>{folder.name}</strong>
-        <em>{formatSize(folder.$size.value)}</em>
+        <NodeSize item={folder} />
         <span className="hidden group-hover:flex gap-1">
           <button type="button" onClick={() => onAddFolder(folder.id)}>
             <FolderPlusIcon size={16} />
@@ -108,7 +108,7 @@ function FolderPresentation({
         {folder.$childrenIds.value.map((id) => (
           <NodePresentation
             key={id}
-            id={id}
+            item={fs.$nodes.peek()[id]}
             fs={fs}
             onAddFile={onAddFile}
             onAddFolder={onAddFolder}
